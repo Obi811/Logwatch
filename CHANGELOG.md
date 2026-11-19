@@ -7,7 +7,12 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/de/).
 
 ## [Unveröffentlicht]
-- —
+### Hinzugefügt
+- **Automatisierte Doku-Pflege:** Release-Skript `scripts/release.py`, das beim
+  Release den Abschnitt „Unveröffentlicht" des CHANGELOG in einen neuen
+  Versionsabschnitt überführt, `VERSION` setzt und (mit `--push`) Tag/Build auslöst.
+- **CI-Prüfung `Doku-Check`** (GitHub Actions): schlägt fehl, wenn Code geändert
+  wurde, ohne den CHANGELOG zu pflegen.
 
 ## [0.2.0] – 2026-11-19
 ### Hinzugefügt

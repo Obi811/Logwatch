@@ -267,3 +267,16 @@ Details siehe `README.md` im Projekt `logwatch-dashboard`.
 
 Konvention: Bei jeder Änderung werden `CHANGELOG.md`, `TODO.md` und diese
 `README.md` mitgepflegt.
+
+### Automatisierte Doku-Pflege
+
+- **Während der Entwicklung:** Änderungen einfach unter der Überschrift
+  `## [Unveröffentlicht]` in `CHANGELOG.md` sammeln.
+- **Release erstellen:** `python scripts/release.py X.Y.Z --push`
+  - verschiebt den Block „Unveröffentlicht" in einen neuen Versionsabschnitt
+    `## [X.Y.Z] – <Datum>`, aktualisiert `VERSION` und die Vergleichs-Links,
+  - committet, setzt den Tag `vX.Y.Z` und pusht ihn → GitHub Actions baut
+    automatisch die `LogWatch.exe` und legt das Release an.
+  - Ohne `--push` werden nur die Doku-Dateien lokal aktualisiert.
+- **CI-Prüfung `Doku-Check`:** schlägt fehl, wenn Code geändert wurde, ohne den
+  `CHANGELOG.md` zu pflegen – so bleibt die Dokumentation verlässlich aktuell.

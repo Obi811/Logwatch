@@ -39,3 +39,8 @@ Zum Abhaken einfach `[ ]` in `[x]` ändern. Neue Punkte unten anhängen.
 - [x] Verschlüsselte Konfiguration + Export/Import für mehrere PCs
 - [x] Autostart mit Windows
 - [x] GitHub-Release mit automatischem Windows-Build (v0.1.0)
+- [x] TeamViewer-ID auslesen und in E-Mail + Dashboard-Upload mitsenden (v0.2.0)
+- [x] Hardware-ID (PC-Fingerprint) für Wiedererkennung/Kopier-Erkennung (v0.2.0)
+- [x] Maschinen-ID und Firma/Kunde in Client-Config und UI (v0.2.0)
+- [x] Upload von Fehlerberichten + Logdatei an das zentrale Dashboard (v0.2.0)
+- [x] Automatisierte Doku-Pflege: Release-Skript `scripts/release.py` + CI-Doku-Check
