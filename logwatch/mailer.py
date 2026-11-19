@@ -33,19 +33,28 @@ def _machine_info(recipients: Sequence[Recipient]) -> str:
     return ", ".join(uniq)
 
 
-def build_subject(config: Config, matches: Sequence[Match], recipients: Sequence[Recipient]) -> str:
+def build_subject(config: Config, matches: Sequence[Match], recipients: Sequence[Recipient],
+                  teamviewer_id: str | None = None) -> str:
     info = _machine_info(recipients)
     count = len(matches)
     base = "[LogWatch] Fehler erkannt"
     if count > 1:
         base = f"[LogWatch] {count} Fehler erkannt"
+    # Maschinen-ID zuerst, dann Firma/Maschine der Empfänger
+    tags = []
+    if config.machine_id:
+        tags.append(config.machine_id)
     if info:
-        return f"{base} – {info}"
+        tags.append(info)
+    if teamviewer_id:
+        tags.append(f"TV {teamviewer_id}")
+    if tags:
+        return f"{base} – {' / '.join(tags)}"
     return base
 
 
 def build_body(config: Config, matches: Sequence[Match], recipients: Sequence[Recipient],
-               hostname: str | None = None) -> str:
+               hostname: str | None = None, teamviewer_id: str | None = None) -> str:
     if hostname is None:
         try:
             hostname = socket.gethostname()
@@ -57,6 +66,12 @@ def build_body(config: Config, matches: Sequence[Match], recipients: Sequence[Re
     lines.append("")
     lines.append(f"Überwachte Logdatei : {config.log_file_path or '(nicht gesetzt)'}")
     lines.append(f"Rechner (Hostname)  : {hostname}")
+    if config.machine_id:
+        lines.append(f"Maschinen-ID        : {config.machine_id}")
+    if config.company:
+        lines.append(f"Firma/Kunde         : {config.company}")
+    if teamviewer_id:
+        lines.append(f"TeamViewer-ID       : {teamviewer_id}")
 
     # Firma/Maschine aus den Empfängerangaben
     companies = sorted({r.company.strip() for r in recipients if r.company.strip()})
@@ -86,7 +101,8 @@ def build_body(config: Config, matches: Sequence[Match], recipients: Sequence[Re
 def build_message(config: Config, matches: Sequence[Match],
                   recipients: Sequence[Recipient] | None = None,
                   attach_log: bool = True,
-                  hostname: str | None = None) -> EmailMessage:
+                  hostname: str | None = None,
+                  teamviewer_id: str | None = None) -> EmailMessage:
     """Baut die EmailMessage inkl. Betreff, Text und Logdatei-Anhang.
 
     Kein Netzwerkzugriff – ideal für Unit-Tests.
@@ -95,11 +111,12 @@ def build_message(config: Config, matches: Sequence[Match],
         recipients = config.active_recipients()
 
     msg = EmailMessage()
-    msg["Subject"] = build_subject(config, matches, recipients)
+    msg["Subject"] = build_subject(config, matches, recipients, teamviewer_id=teamviewer_id)
     msg["From"] = config.smtp.from_address or config.smtp.username
     msg["To"] = ", ".join(r.email.strip() for r in recipients if r.email.strip())
     msg["Date"] = formatdate(localtime=True)
-    msg.set_content(build_body(config, matches, recipients, hostname=hostname))
+    msg.set_content(build_body(config, matches, recipients, hostname=hostname,
+                               teamviewer_id=teamviewer_id))
 
     if attach_log and config.log_file_path and os.path.isfile(config.log_file_path):
         try:

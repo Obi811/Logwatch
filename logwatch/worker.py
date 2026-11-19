@@ -9,7 +9,9 @@ from PySide6.QtCore import QThread, Signal
 
 from .config import Config
 from .mailer import build_message, send_message
+from .machine_ids import compute_hardware_id, get_teamviewer_id
 from .monitor import Monitor
+from .uploader import build_report, upload_report
 
 
 class MonitorWorker(QThread):
@@ -22,9 +24,25 @@ class MonitorWorker(QThread):
         self._running = False
         self._check_now = False
 
+        # Maschinen-Kennungen einmalig ermitteln (best effort, stabil pro PC).
+        self.teamviewer_id = get_teamviewer_id()
+        self.hardware_id = compute_hardware_id()
+
         def send(cfg: Config, matches):
-            msg = build_message(cfg, matches)
+            # 1) E-Mail inkl. TeamViewer-ID (bleibt unabhängig vom Upload bestehen)
+            msg = build_message(cfg, matches, teamviewer_id=self.teamviewer_id)
             send_message(cfg.smtp, msg)
+            # 2) Zusätzlich an das Dashboard hochladen (robust, darf nicht crashen)
+            try:
+                if cfg.dashboard.enabled:
+                    report = build_report(
+                        cfg, matches,
+                        teamviewer_id=self.teamviewer_id,
+                        hardware_id=self.hardware_id,
+                    )
+                    upload_report(cfg, report, log_path=cfg.log_file_path, log_func=self._emit)
+            except Exception as exc:  # noqa: BLE001 - Upload darf E-Mail nie beeinträchtigen
+                self._emit(f"Dashboard-Upload übersprungen (Fehler): {exc}")
 
         self.monitor = Monitor(config, send_func=send, log_func=self._emit)
 

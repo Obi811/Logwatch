@@ -64,6 +64,21 @@ def test_multiple_matches_subject_count(tmp_path):
     assert "2 Fehler" in subject
 
 
+def test_teamviewer_id_and_machine_id_in_mail(tmp_path):
+    c = make_config(tmp_path)
+    c.machine_id = "M-77"
+    c.company = "Kunde AG"
+    matches = [Match(line="ERROR x", keyword="ERROR")]
+    msg = build_message(c, matches, teamviewer_id="123456789")
+    assert "M-77" in msg["Subject"]
+    assert "TV 123456789" in msg["Subject"]
+    body = msg.get_body(preferencelist=("plain",)).get_content()
+    assert "TeamViewer-ID" in body
+    assert "123456789" in body
+    assert "M-77" in body
+    assert "Kunde AG" in body
+
+
 def test_test_message(tmp_path):
     c = make_config(tmp_path)
     msg = build_test_message(c)

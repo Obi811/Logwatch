@@ -118,6 +118,33 @@ class MainWindow(QMainWindow):
         gl.addWidget(QLabel("Nach einer Mail werden Fehler gesammelt und erst nach Ablauf gesendet."), 2, 2)
         root.addWidget(g_log)
 
+        # --- Maschinen-Identität ---
+        g_id = QGroupBox("Maschinen-Identität (für E-Mail & Dashboard)")
+        il = QGridLayout(g_id)
+        self.ed_machine_id = QLineEdit()
+        self.ed_company = QLineEdit()
+        il.addWidget(QLabel("Maschinen-ID:"), 0, 0)
+        il.addWidget(self.ed_machine_id, 0, 1)
+        il.addWidget(QLabel("(vom Betreiber vergeben, eindeutig)"), 0, 2)
+        il.addWidget(QLabel("Firma/Kunde:"), 1, 0)
+        il.addWidget(self.ed_company, 1, 1)
+        root.addWidget(g_id)
+
+        # --- Zentrales Dashboard (Upload) ---
+        g_dash = QGroupBox("Zentrales Dashboard (optionaler Upload zusätzlich zur E-Mail)")
+        dl = QGridLayout(g_dash)
+        self.chk_upload = QCheckBox("Fehlerberichte an Dashboard senden")
+        self.ed_dash_url = QLineEdit()
+        self.ed_dash_url.setPlaceholderText("https://logwatch-xxxx.abacusai.cloud")
+        self.ed_dash_token = QLineEdit()
+        self.ed_dash_token.setEchoMode(QLineEdit.Password)
+        dl.addWidget(self.chk_upload, 0, 0, 1, 2)
+        dl.addWidget(QLabel("Dashboard-URL:"), 1, 0)
+        dl.addWidget(self.ed_dash_url, 1, 1)
+        dl.addWidget(QLabel("Upload-Token:"), 2, 0)
+        dl.addWidget(self.ed_dash_token, 2, 1)
+        root.addWidget(g_dash)
+
         # --- Fehlermodus ---
         g_mode = QGroupBox("Fehlererkennung")
         ml = QVBoxLayout(g_mode)
@@ -261,6 +288,11 @@ class MainWindow(QMainWindow):
         else:
             self.cmb_sec.setCurrentIndex(2)
         self.chk_autostart.setChecked(c.autostart)
+        self.ed_machine_id.setText(c.machine_id)
+        self.ed_company.setText(c.company)
+        self.chk_upload.setChecked(c.dashboard.enabled)
+        self.ed_dash_url.setText(c.dashboard.base_url)
+        self.ed_dash_token.setText(c.dashboard.upload_token)
 
     def _row_checkbox(self, row) -> QCheckBox:
         return self.tbl.cellWidget(row, 3).findChild(QCheckBox)
@@ -293,6 +325,14 @@ class MainWindow(QMainWindow):
             from_address=self.ed_from.text().strip(),
         )
         c.autostart = self.chk_autostart.isChecked()
+        c.machine_id = self.ed_machine_id.text().strip()
+        c.company = self.ed_company.text().strip()
+        from .config import DashboardSettings
+        c.dashboard = DashboardSettings(
+            enabled=self.chk_upload.isChecked(),
+            base_url=self.ed_dash_url.text().strip(),
+            upload_token=self.ed_dash_token.text().strip(),
+        )
         return c
 
     # --------------------------------------------------------------- actions

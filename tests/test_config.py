@@ -96,6 +96,54 @@ def test_export_import_portable(tmp_path):
     assert imported.specific_keywords == c.specific_keywords
 
 
+def test_new_fields_roundtrip(tmp_path):
+    from logwatch.config import DashboardSettings
+    c = Config()
+    c.machine_id = "M-42"
+    c.company = "Kunde AG"
+    c.dashboard = DashboardSettings(enabled=True, base_url="https://d.example.com", upload_token="tok")
+    path = str(tmp_path / "config.dat")
+    save_config(c, path)
+    loaded = load_config(path)
+    assert loaded.machine_id == "M-42"
+    assert loaded.company == "Kunde AG"
+    assert loaded.dashboard.enabled is True
+    assert loaded.dashboard.base_url == "https://d.example.com"
+    assert loaded.dashboard.upload_token == "tok"
+
+
+def test_backward_compatible_old_config_without_new_fields():
+    """Eine alte Config (ohne machine_id/company/dashboard) muss weiter laden."""
+    old = {
+        "log_file_path": r"C:\logs\app.log",
+        "check_interval_seconds": 20,
+        "error_mode": "all",
+        "all_keywords": ["ERROR"],
+        "specific_keywords": [],
+        "smtp": {"host": "h"},
+        "recipients": [],
+        "cooldown_seconds": 300,
+        "autostart": False,
+    }
+    c = Config.from_dict(old)
+    assert c.machine_id == ""
+    assert c.company == ""
+    assert c.dashboard.enabled is False
+    assert c.dashboard.base_url == ""
+
+
+def test_export_import_includes_new_fields(tmp_path):
+    from logwatch.config import DashboardSettings
+    c = Config()
+    c.machine_id = "M-7"
+    c.dashboard = DashboardSettings(enabled=True, base_url="https://x", upload_token="s")
+    p = str(tmp_path / "profil.dat")
+    export_config(c, p)
+    imported = import_config(p)
+    assert imported.machine_id == "M-7"
+    assert imported.dashboard.upload_token == "s"
+
+
 def test_active_recipients_filters():
     c = Config()
     c.recipients = [

@@ -100,10 +100,37 @@ class SMTPSettings:
 
 
 @dataclass
+class DashboardSettings:
+    """Einstellungen für den optionalen Upload an das zentrale Web-Dashboard."""
+    enabled: bool = False          # Upload an/aus
+    base_url: str = ""             # z.B. https://logwatch-xyz.abacusai.cloud
+    upload_token: str = ""         # Shared-Secret / Upload-Token (Header)
+
+    def to_dict(self) -> Dict[str, Any]:
+        return asdict(self)
+
+    @classmethod
+    def from_dict(cls, d: Dict[str, Any]) -> "DashboardSettings":
+        d = d or {}
+        return cls(
+            enabled=bool(d.get("enabled", False)),
+            base_url=str(d.get("base_url", "")),
+            upload_token=str(d.get("upload_token", "")),
+        )
+
+
+@dataclass
 class Config:
     # Überwachung
     log_file_path: str = ""
     check_interval_seconds: int = 30
+
+    # Maschinen-Identität (vom Betreiber "auf dem Papier" vergeben)
+    machine_id: str = ""          # eindeutige Maschinen-ID
+    company: str = ""             # Firma/Kunde auf Maschinen-Ebene
+
+    # Zentrales Dashboard (optionaler Upload)
+    dashboard: "DashboardSettings" = field(default_factory=lambda: DashboardSettings())
 
     # Fehlererkennung
     # Modus: "all" (alle Fehler, generische Stichwörter) oder "specific" (nur bestimmte)
@@ -131,6 +158,9 @@ class Config:
         return {
             "log_file_path": self.log_file_path,
             "check_interval_seconds": self.check_interval_seconds,
+            "machine_id": self.machine_id,
+            "company": self.company,
+            "dashboard": self.dashboard.to_dict(),
             "error_mode": self.error_mode,
             "all_keywords": list(self.all_keywords),
             "specific_keywords": list(self.specific_keywords),
@@ -145,6 +175,10 @@ class Config:
         c = cls()
         c.log_file_path = str(d.get("log_file_path", ""))
         c.check_interval_seconds = int(d.get("check_interval_seconds", 30))
+        # Neue Felder (abwärtskompatibel: alte Config ohne diese Felder lädt weiter)
+        c.machine_id = str(d.get("machine_id", ""))
+        c.company = str(d.get("company", ""))
+        c.dashboard = DashboardSettings.from_dict(d.get("dashboard", {}))
         c.error_mode = str(d.get("error_mode", "all"))
         if c.error_mode not in ("all", "specific"):
             c.error_mode = "all"
