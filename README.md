@@ -205,6 +205,39 @@ python -m pytest -q
 
 ---
 
+## 8a. Zentrales Dashboard (optionaler Upload)
+
+Zusätzlich zum E-Mail-Versand kann der Client jeden erkannten Fehler an ein
+zentrales Web-Dashboard melden (eigenes Projekt `logwatch-dashboard`). Der
+E-Mail-Versand bleibt davon unberührt – beides läuft parallel.
+
+- **Aktivierung in der GUI:** Gruppe „Zentrales Dashboard“ → Haken setzen,
+  Dashboard-URL (z.B. `https://logwatch-dash.abacusai.cloud`) und das
+  **Upload-Token** eintragen (muss mit dem Token des Dashboards übereinstimmen).
+- **Maschinen-Identität:** Gruppe „Maschinen-Identität“ → `Maschinen-ID` und
+  `Firma/Kunde` setzen. Die Maschinen-ID identifiziert das Gerät im Dashboard.
+- **Automatisch ermittelt:** TeamViewer-ID (für die Fernwartung) und ein
+  Hardware-Fingerprint (für die Kopier-Erkennung im Dashboard). Die TeamViewer-ID
+  erscheint zusätzlich im Betreff und Text der Benachrichtigungs-E-Mail.
+- **Robustheit:** Schlägt der Upload fehl (offline, Timeout, Serverfehler), wird
+  das nur protokolliert – die App läuft weiter und die E-Mail wird trotzdem
+  versendet.
+
+**Upload-API-Vertrag** (Feldnamen müssen zum Dashboard passen):
+
+```
+POST {dashboard-url}/api/v1/reports
+Header:  X-Upload-Token: <Token>
+Body:    multipart/form-data
+  - Feld  "payload"  : JSON (machine_id, company, hardware_id, teamviewer_id,
+                       hostname, timestamp, error_count, error_lines[], log_filename)
+  - Datei "logfile"  : die Logdatei (optional)
+```
+
+Details siehe `README.md` im Projekt `logwatch-dashboard`.
+
+---
+
 ## 9. Releases & Lizenz
 
 - **Release erstellen (mit automatischem Windows-Build):** siehe
