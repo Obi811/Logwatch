@@ -39,5 +39,5 @@ und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/d
 - PyInstaller-Spec, `build_windows.bat` und GitHub-Actions-Workflows für Tests
   und Windows-Release.
 
-[Unveröffentlicht]: https://github.com/USERNAME/Logwatch/compare/v0.1.0...HEAD
-[0.1.0]: https://github.com/USERNAME/Logwatch/releases/tag/v0.1.0
+[Unveröffentlicht]: https://github.com/Obi811/Logwatch/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/Obi811/Logwatch/releases/tag/v0.1.0

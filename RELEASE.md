@@ -5,7 +5,7 @@ veröffentlichst. Die Windows-`.exe` wird dabei automatisch von GitHub Actions
 auf einem Windows-Runner gebaut und an das Release angehängt.
 
 ## Voraussetzungen (einmalig)
-1. Repository auf GitHub vorhanden (z.B. `https://github.com/USERNAME/Logwatch`).
+1. Repository auf GitHub vorhanden (z.B. `https://github.com/Obi811/Logwatch`).
 2. Dieses Projekt ist in das Repo gepusht (siehe unten „Erstes Hochladen").
 3. In den Repo-Einstellungen unter **Settings → Actions → General →
    Workflow permissions** muss **„Read and write permissions"** aktiv sein,
@@ -19,7 +19,7 @@ git init                     # falls noch nicht geschehen
 git add -A
 git commit -m "Initialer Commit: LogWatch"
 git branch -M main
-git remote add origin https://github.com/USERNAME/Logwatch.git
+git remote add origin https://github.com/Obi811/Logwatch.git
 git push -u origin main
 ```
 > `USERNAME` durch deinen GitHub-Benutzer/Org ersetzen. Passe die Links in
