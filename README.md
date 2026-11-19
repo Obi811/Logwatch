@@ -205,7 +205,20 @@ python -m pytest -q
 
 ---
 
-## 9. Hinweise / Grenzen
+## 9. Releases & Lizenz
+
+- **Release erstellen (mit automatischem Windows-Build):** siehe
+  [`RELEASE.md`](RELEASE.md). Kurzfassung: `VERSION` + `CHANGELOG.md`
+  aktualisieren, Tag `vX.Y.Z` pushen → GitHub Actions baut die `LogWatch.exe`
+  und legt automatisch ein Release mit der EXE als Download an.
+- **Änderungen:** siehe [`CHANGELOG.md`](CHANGELOG.md).
+- **Lizenz:** MIT, siehe [`LICENSE`](LICENSE).
+- **CI:** Bei jedem Push/PR laufen die Unit-Tests automatisch
+  (`.github/workflows/tests.yml`).
+
+---
+
+## 10. Hinweise / Grenzen
 
 - Die GUI, der Autostart (Registry) und das finale PyInstaller-Build sind nur
   unter **Windows** lauffähig/testbar. Die Kernlogik wurde plattformunabhängig
