@@ -9,6 +9,26 @@ und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/d
 ## [Unveröffentlicht]
 - —
 
+## [0.2.0] – 2026-11-19
+### Hinzugefügt
+- Auslesen der **TeamViewer-ID** (aus der Windows-Registry) und Mitsenden in der
+  Alarm-E-Mail (Betreff und Text).
+- Ermittlung einer stabilen **Hardware-ID** (Fingerprint des PCs) zur
+  Wiedererkennung der Maschine.
+- Neues Feld **Maschinen-ID** (vom Betreiber vergeben) sowie **Firma/Kunde**.
+- **Upload an das zentrale Dashboard**: Bei einem erkannten Fehler wird
+  zusätzlich zur E-Mail ein Bericht (Maschinen-ID, Hardware-ID, TeamViewer-ID,
+  Firma, Hostname, Fehlerzeilen, Zeitstempel) samt Logdatei an die
+  Dashboard-API hochgeladen. Robust gegen Netzwerkfehler; der E-Mail-Versand
+  bleibt davon unberührt. Upload in der UI an-/abschaltbar.
+- Neue UI-Felder für Maschinen-ID, Firma/Kunde, Dashboard-URL, Upload-Token
+  und Upload an/aus; Konfiguration abwärtskompatibel erweitert (alte Profile
+  laden weiter, Export/Import angepasst).
+
+### Hinweise
+- Der **E-Mail-Versand bleibt** vollständig erhalten; das Dashboard ist eine
+  zusätzliche Meldewege-Option.
+
 ## [0.1.0] – 2026-11-19
 ### Hinzugefügt
 - Überwachung einer konfigurierbaren Logdatei in einstellbarem Intervall
@@ -39,5 +59,6 @@ und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/d
 - PyInstaller-Spec, `build_windows.bat` und GitHub-Actions-Workflows für Tests
   und Windows-Release.
 
-[Unveröffentlicht]: https://github.com/Obi811/Logwatch/compare/v0.1.0...HEAD
+[Unveröffentlicht]: https://github.com/Obi811/Logwatch/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/Obi811/Logwatch/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Obi811/Logwatch/releases/tag/v0.1.0
