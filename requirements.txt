@@ -5,3 +5,4 @@ cryptography>=42
 # Nur für Entwicklung/Build (optional):
 # pytest>=7
 # pyinstaller>=6
+# aiosmtpd>=1.4   # nur für den E2E-SMTP-Test
