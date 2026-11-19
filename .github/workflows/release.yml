@@ -1,0 +1,53 @@
+name: Release (Windows-Build)
+
+# Baut die LogWatch.exe auf einem Windows-Runner und erstellt automatisch ein
+# GitHub-Release, sobald ein Versions-Tag (z.B. v0.1.0) gepusht wird.
+#
+# Manuell auslösbar ist der Build ebenfalls (workflow_dispatch) – dann ohne Release.
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write   # notwendig, damit die Action ein Release anlegen darf
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Code auschecken
+        uses: actions/checkout@v4
+
+      - name: Python einrichten
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Abhängigkeiten installieren
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest aiosmtpd pyinstaller
+
+      - name: Tests ausführen
+        run: python -m pytest -q
+
+      - name: EXE bauen (PyInstaller)
+        run: pyinstaller logwatch.spec --noconfirm
+
+      - name: EXE als Build-Artefakt hochladen
+        uses: actions/upload-artifact@v4
+        with:
+          name: LogWatch-exe
+          path: dist/LogWatch.exe
+
+      - name: GitHub-Release erstellen (nur bei Tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/LogWatch.exe
+          generate_release_notes: true
+          body_path: ${{ github.workspace }}/CHANGELOG.md
