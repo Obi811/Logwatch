@@ -259,3 +259,11 @@ Details siehe `README.md` im Projekt `logwatch-dashboard`.
 - Die eingebettete Verschlüsselung (ohne Master-Passwort) schützt vor
   beiläufigem Mitlesen, nicht gegen gezielte Angreifer mit Zugriff auf die
   Anwendung. Für echten Schutz ein **Master-Passwort** verwenden.
+
+## Projektpflege
+
+- **Versionen/Änderungen:** siehe [`CHANGELOG.md`](CHANGELOG.md).
+- **Offene Aufgaben/Ideen:** siehe [`TODO.md`](TODO.md).
+
+Konvention: Bei jeder Änderung werden `CHANGELOG.md`, `TODO.md` und diese
+`README.md` mitgepflegt.
