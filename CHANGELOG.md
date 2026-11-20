@@ -13,6 +13,15 @@ und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/d
   Versionsabschnitt überführt, `VERSION` setzt und (mit `--push`) Tag/Build auslöst.
 - **CI-Prüfung `Doku-Check`** (GitHub Actions): schlägt fehl, wenn Code geändert
   wurde, ohne den CHANGELOG zu pflegen.
+- **Automatisierte Abhängigkeits-Pflege (Dependabot):** `.github/dependabot.yml`
+  prüft wöchentlich sowohl die Python-Pakete (`requirements.txt`) als auch die
+  GitHub-Actions und schlägt Aktualisierungen als **gesammelte Pull-Requests**
+  vor. Zusammengeführt wird nichts automatisch – die Kontrolle bleibt bei dir.
+  Sicherheits-Updates für bekannte Schwachstellen werden zusätzlich automatisch
+  als PR eröffnet. (Behebt u. a. die „Node 20"-Deprecation-Warnung der Actions.)
+- **Sicherheits-Audit `Security-Audit`** (GitHub Actions,
+  `.github/workflows/security-audit.yml`): prüft die Abhängigkeiten bei jedem
+  Push/PR und wöchentlich mit `pip-audit` auf bekannte Sicherheitslücken.
 
 ## [0.2.0] – 2026-11-19
 ### Hinzugefügt

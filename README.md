@@ -247,7 +247,8 @@ Details siehe `README.md` im Projekt `logwatch-dashboard`.
 - **Änderungen:** siehe [`CHANGELOG.md`](CHANGELOG.md).
 - **Lizenz:** MIT, siehe [`LICENSE`](LICENSE).
 - **CI:** Bei jedem Push/PR laufen die Unit-Tests automatisch
-  (`.github/workflows/tests.yml`).
+  (`.github/workflows/tests.yml`), ein Sicherheits-Audit der Abhängigkeiten
+  (`.github/workflows/security-audit.yml`) und der Doku-Check.
 
 ---
 
@@ -280,3 +281,21 @@ Konvention: Bei jeder Änderung werden `CHANGELOG.md`, `TODO.md` und diese
   - Ohne `--push` werden nur die Doku-Dateien lokal aktualisiert.
 - **CI-Prüfung `Doku-Check`:** schlägt fehl, wenn Code geändert wurde, ohne den
   `CHANGELOG.md` zu pflegen – so bleibt die Dokumentation verlässlich aktuell.
+
+### Automatisierte Abhängigkeits- und Sicherheits-Pflege
+
+- **Dependabot (`.github/dependabot.yml`):** prüft wöchentlich die
+  Python-Pakete (`requirements.txt`) und die GitHub-Actions und schlägt
+  Aktualisierungen als **gesammelte Pull-Requests** vor. Es wird nichts
+  automatisch zusammengeführt – jeder Update-PR wird von dir geprüft und
+  bestätigt. Bekannte Sicherheitslücken werden zusätzlich automatisch als
+  PR gemeldet. Der Actions-Teil hält die Workflows aktuell (behebt u. a. die
+  „Node 20"-Deprecation-Warnung).
+- **Sicherheits-Audit (`.github/workflows/security-audit.yml`):** prüft die
+  Abhängigkeiten bei jedem Push/PR und zusätzlich wöchentlich mit `pip-audit`
+  auf bekannte Schwachstellen.
+- **Tipp:** Die Tests als verpflichtende Merge-Bedingung lassen sich einmalig in
+  GitHub aktivieren: *Settings → Branches → Add branch ruleset/Protection rule*
+  für `main`, dort „Require status checks to pass" setzen und die Checks
+  `Tests`, `Security-Audit` und `Doku-Check` auswählen. Dann kann ein PR nur
+  gemergt werden, wenn alle Prüfungen grün sind.

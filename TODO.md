@@ -44,3 +44,6 @@ Zum Abhaken einfach `[ ]` in `[x]` ändern. Neue Punkte unten anhängen.
 - [x] Maschinen-ID und Firma/Kunde in Client-Config und UI (v0.2.0)
 - [x] Upload von Fehlerberichten + Logdatei an das zentrale Dashboard (v0.2.0)
 - [x] Automatisierte Doku-Pflege: Release-Skript `scripts/release.py` + CI-Doku-Check
+- [x] Automatisierte Abhängigkeits-Updates per Dependabot (Python + GitHub-Actions, wöchentliche PRs)
+- [x] Automatische Sicherheits-Updates bei bekannten Schwachstellen (Dependabot Security)
+- [x] Sicherheits-Audit der Abhängigkeiten per `pip-audit` (CI-Workflow `Security-Audit`)
