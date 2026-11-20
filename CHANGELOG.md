@@ -23,6 +23,10 @@ und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/d
   `.github/workflows/security-audit.yml`): prüft die Abhängigkeiten bei jedem
   Push/PR und wöchentlich mit `pip-audit` auf bekannte Sicherheitslücken.
 
+### Geändert
+- Abhängigkeiten aktualisiert (Dependabot): `PySide6` (>=6.12.0), `cryptography`
+  (>=50.0.2) und `requests` (>=2.34.2). Tests und Sicherheits-Audit grün.
+
 ## [0.2.0] – 2026-11-19
 ### Hinzugefügt
 - Auslesen der **TeamViewer-ID** (aus der Windows-Registry) und Mitsenden in der
