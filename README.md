@@ -238,6 +238,39 @@ Details siehe `README.md` im Projekt `logwatch-dashboard`.
 
 ---
 
+## 8b. Automatische Updates
+
+Der Client kann sich selbst aktualisieren, indem er bei GitHub nachsieht, ob ein
+neueres Release vorliegt.
+
+**So funktioniert es**
+- Im Hauptfenster gibt es die Gruppe **„Updates"** mit der aktuellen Version,
+  der Option **„Beim Start nach Updates suchen"** und dem Button
+  **„Nach Updates suchen"**.
+- Beim Klick (oder beim Start, falls aktiviert) fragt der Client das neueste
+  Release ab (`releases/latest`). Ist eine neuere Version verfügbar, erscheint
+  ein Hinweis mit den Release-Notes und den Buttons **„Jetzt aktualisieren"** /
+  **„Später"**. Bei „Jetzt aktualisieren" wird die neue `LogWatch.exe` mit
+  Fortschrittsanzeige heruntergeladen, die laufende EXE ausgetauscht und die App
+  neu gestartet. Ist bereits die neueste Version installiert, erscheint eine
+  entsprechende Meldung.
+- Der Auto-Check beim Start läuft im Hintergrund; Fehler (z. B. keine
+  Internetverbindung) werden still behandelt und stören den Betrieb nicht.
+
+**GitHub-Token (optional)**
+- Bei **öffentlichem** Repo ist **kein Token nötig** – die Update-Prüfung
+  funktioniert ohne weitere Einstellungen.
+- Es kann aber schon **jetzt** ein persönliches Zugriffs-Token (PAT) im Feld
+  **„GitHub-Token"** hinterlegt werden. Dann funktioniert alles nahtlos weiter,
+  sobald das Repo später auf **privat** gestellt wird.
+- Empfehlung für privaten Zugriff mit minimalen Rechten: ein **Fine-grained PAT**
+  mit **Nur-Lese-Recht auf „Contents"** des Repos `Obi811/Logwatch`. Alternativ
+  ein klassisches Token mit dem Scope **`repo`**.
+- Das Token wird **verschlüsselt** in der lokalen Konfiguration gespeichert und
+  erscheint **niemals im Klartext** in Export-Dateien oder Logs.
+
+---
+
 ## 9. Releases & Lizenz
 
 - **Release erstellen (mit automatischem Windows-Build):** siehe

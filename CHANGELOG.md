@@ -8,6 +8,19 @@ und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/d
 
 ## [Unveröffentlicht]
 ### Hinzugefügt
+- **Update-Funktion:** Der Client prüft über die GitHub-API, ob ein neueres
+  Release verfügbar ist, und kann die neue `LogWatch.exe` herunterladen und
+  installieren (unter Windows: Austausch der laufenden EXE + Neustart). Neue
+  Einstellungsgruppe „Updates" mit der Option **„Beim Start nach Updates
+  suchen"**, einem Button **„Nach Updates suchen"** und der Anzeige der aktuellen
+  Version. Prüfung und Download laufen im Hintergrund (kein Blockieren der UI).
+- **Optionales GitHub-Token (PAT):** In der Update-Gruppe kann ein persönliches
+  Zugriffs-Token hinterlegt werden (maskiertes Feld). Es wird **verschlüsselt**
+  in der Konfiguration gespeichert und bei vorhandenem Wert als
+  `Authorization: Bearer`-Header gesendet. Dadurch funktioniert die
+  Update-Prüfung sowohl für das aktuell öffentliche Repo als auch nahtlos
+  weiter, falls das Repo später auf privat gestellt wird. Das Token erscheint
+  niemals im Klartext in Logs oder Fehlermeldungen.
 - **Automatisierte Doku-Pflege:** Release-Skript `scripts/release.py`, das beim
   Release den Abschnitt „Unveröffentlicht" des CHANGELOG in einen neuen
   Versionsabschnitt überführt, `VERSION` setzt und (mit `--push`) Tag/Build auslöst.

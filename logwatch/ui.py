@@ -8,16 +8,17 @@ from __future__ import annotations
 import os
 import sys
 
-from PySide6.QtCore import Qt, QTimer
+from PySide6.QtCore import Qt, QTimer, QThread, Signal
 from PySide6.QtGui import QAction, QIcon, QPixmap, QPainter, QColor, QBrush
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QGridLayout,
     QLabel, QLineEdit, QPushButton, QSpinBox, QRadioButton, QButtonGroup,
     QPlainTextEdit, QCheckBox, QComboBox, QFileDialog, QGroupBox, QTableWidget,
     QTableWidgetItem, QMessageBox, QInputDialog, QSystemTrayIcon, QMenu,
+    QProgressDialog,
 )
 
-from . import autostart, config as cfgmod, crypto
+from . import autostart, config as cfgmod, crypto, updater
 from .app_logging import setup_logging, get_logger
 from .config import Config, Recipient, SMTPSettings, DEFAULT_KEYWORDS
 from .mailer import build_test_message, send_message
@@ -43,6 +44,45 @@ def make_icon(color: str = "#2d7d46") -> QIcon:
     return QIcon(pix)
 
 
+class UpdateCheckWorker(QThread):
+    """Prüft im Hintergrund auf Updates (blockiert die UI nicht)."""
+    finished_check = Signal(object)  # updater.UpdateCheckResult
+
+    def __init__(self, local_version: str, token: str | None):
+        super().__init__()
+        self._local_version = local_version
+        self._token = token or None
+
+    def run(self) -> None:
+        try:
+            result = updater.check_for_update(self._local_version, token=self._token)
+        except Exception as exc:  # noqa: BLE001 - Prüfung darf nie crashen
+            result = updater.UpdateCheckResult(
+                ok=False, local_version=self._local_version,
+                error=f"Unerwarteter Fehler bei der Update-Prüfung: {exc}")
+        self.finished_check.emit(result)
+
+
+class UpdateDownloadWorker(QThread):
+    """Lädt die neue EXE im Hintergrund herunter und meldet den Fortschritt."""
+    progress = Signal(int, int)       # (gelesen, gesamt)
+    finished_dl = Signal(object)      # str (Pfad) bei Erfolg, sonst Exception/str
+
+    def __init__(self, release, token: str | None):
+        super().__init__()
+        self._release = release
+        self._token = token or None
+
+    def run(self) -> None:
+        try:
+            path = updater.download_update(
+                self._release, token=self._token,
+                progress_callback=lambda r, t: self.progress.emit(int(r), int(t)))
+            self.finished_dl.emit(path)
+        except Exception as exc:  # noqa: BLE001
+            self.finished_dl.emit(exc)
+
+
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -56,12 +96,22 @@ class MainWindow(QMainWindow):
         self.worker: MonitorWorker | None = None
         self._allow_close = False
 
+        # Update-Hintergrund-Worker (Referenzen halten, damit sie nicht wegräumt werden)
+        self._update_check_worker: UpdateCheckWorker | None = None
+        self._update_dl_worker: UpdateDownloadWorker | None = None
+        self._update_progress: QProgressDialog | None = None
+
         self.config = self._load_config_with_prompt()
 
         self._build_ui()
         self._config_to_ui(self.config)
         self._build_tray()
         self.append_status("LogWatch gestartet. Konfiguration geladen.")
+
+        # Automatische Update-Prüfung beim Start (nicht blockierend, Fehler werden
+        # nur protokolliert). Leicht verzögert, damit die UI zuerst erscheint.
+        if self.config.update_check_on_start:
+            QTimer.singleShot(1500, lambda: self._start_update_check(manual=False))
 
     # ------------------------------------------------------------------ laden
     def _load_config_with_prompt(self) -> Config:
@@ -219,6 +269,23 @@ class MainWindow(QMainWindow):
         ol.addStretch(1)
         root.addWidget(g_opt)
 
+        # --- Updates ---
+        g_upd = QGroupBox("Updates")
+        ul = QGridLayout(g_upd)
+        self.chk_update_on_start = QCheckBox("Beim Start nach Updates suchen")
+        self.ed_github_token = QLineEdit()
+        self.ed_github_token.setEchoMode(QLineEdit.Password)  # maskiert wie Passwortfelder
+        self.ed_github_token.setPlaceholderText("Nur für privates Repo nötig – optional")
+        self.btn_check_update = QPushButton("Nach Updates suchen")
+        self.btn_check_update.clicked.connect(lambda: self._start_update_check(manual=True))
+        self.lbl_version = QLabel(f"Installierte Version: {updater.read_local_version()}")
+        ul.addWidget(self.chk_update_on_start, 0, 0, 1, 2)
+        ul.addWidget(QLabel("GitHub-Token (optional, für privates Repo):"), 1, 0)
+        ul.addWidget(self.ed_github_token, 1, 1)
+        ul.addWidget(self.lbl_version, 2, 0)
+        ul.addWidget(self.btn_check_update, 2, 1)
+        root.addWidget(g_upd)
+
         # --- Buttons ---
         btns = QHBoxLayout()
         self.btn_save = QPushButton("Speichern")
@@ -293,6 +360,8 @@ class MainWindow(QMainWindow):
         self.chk_upload.setChecked(c.dashboard.enabled)
         self.ed_dash_url.setText(c.dashboard.base_url)
         self.ed_dash_token.setText(c.dashboard.upload_token)
+        self.chk_update_on_start.setChecked(c.update_check_on_start)
+        self.ed_github_token.setText(c.github_pat)
 
     def _row_checkbox(self, row) -> QCheckBox:
         return self.tbl.cellWidget(row, 3).findChild(QCheckBox)
@@ -333,6 +402,8 @@ class MainWindow(QMainWindow):
             base_url=self.ed_dash_url.text().strip(),
             upload_token=self.ed_dash_token.text().strip(),
         )
+        c.update_check_on_start = self.chk_update_on_start.isChecked()
+        c.github_pat = self.ed_github_token.text().strip()
         return c
 
     # --------------------------------------------------------------- actions
@@ -445,6 +516,141 @@ class MainWindow(QMainWindow):
             return
         self.master_password = pw or None
         self.append_status("Master-Passwort gesetzt. Bitte 'Speichern', um es anzuwenden.")
+
+    # --------------------------------------------------------------- updates
+    def _start_update_check(self, manual: bool = False) -> None:
+        """Startet die Update-Prüfung im Hintergrund (blockiert die UI nicht).
+
+        ``manual=True``: vom Nutzer per Button ausgelöst → Ergebnis immer als Dialog.
+        ``manual=False``: Auto-Check beim Start → nur bei verfügbarem Update ein
+        dezenter Hinweis; Fehler werden still nur protokolliert.
+        """
+        if self._update_check_worker and self._update_check_worker.isRunning():
+            if manual:
+                self.append_status("Update-Prüfung läuft bereits …")
+            return
+
+        token = self.ed_github_token.text().strip() or None
+        local_version = updater.read_local_version()
+        if manual:
+            self.btn_check_update.setEnabled(False)
+            self.append_status("Suche nach Updates …")
+
+        worker = UpdateCheckWorker(local_version, token)
+        worker.finished_check.connect(lambda res: self._on_update_checked(res, manual))
+        self._update_check_worker = worker
+        worker.start()
+
+    def _on_update_checked(self, result, manual: bool) -> None:
+        if manual:
+            self.btn_check_update.setEnabled(True)
+
+        if not result.ok:
+            # Fehler: im manuellen Fall anzeigen, beim Auto-Check nur loggen.
+            self.append_status(f"Update-Prüfung fehlgeschlagen: {result.error}")
+            if manual:
+                QMessageBox.warning(self, "LogWatch", result.error)
+            return
+
+        if not result.update_available:
+            self.append_status(f"Keine neuere Version verfügbar (installiert: {result.local_version}).")
+            if manual:
+                QMessageBox.information(
+                    self, "LogWatch",
+                    f"Du hast bereits die neueste Version ({result.local_version}).")
+            return
+
+        # Ein Update ist verfügbar.
+        self.append_status(
+            f"Update verfügbar: {result.remote_version} (installiert: {result.local_version}).")
+        if not result.asset_available:
+            msg = (f"Version {result.remote_version} ist verfügbar, enthält aber keine "
+                   f"installierbare {updater.ASSET_NAME}. Bitte manuell von GitHub laden.")
+            self.append_status(msg)
+            if manual:
+                QMessageBox.information(self, "LogWatch", msg)
+            return
+
+        self._prompt_update(result)
+
+    def _prompt_update(self, result) -> None:
+        notes = (result.release_notes or "").strip()
+        if len(notes) > 1200:
+            notes = notes[:1200] + "\n…"
+        text = (f"Eine neue Version ist verfügbar.\n\n"
+                f"Installiert: {result.local_version}\n"
+                f"Neu: {result.remote_version}\n\n"
+                f"Änderungen:\n{notes or '(keine Beschreibung)'}\n\n"
+                f"Jetzt herunterladen und aktualisieren?")
+        box = QMessageBox(self)
+        box.setWindowTitle("LogWatch – Update verfügbar")
+        box.setIcon(QMessageBox.Question)
+        box.setText(text)
+        btn_now = box.addButton("Jetzt aktualisieren", QMessageBox.AcceptRole)
+        box.addButton("Später", QMessageBox.RejectRole)
+        box.exec()
+        if box.clickedButton() is btn_now:
+            self._start_update_download(result.release)
+
+    def _start_update_download(self, release) -> None:
+        if not updater.is_windows():
+            QMessageBox.information(
+                self, "LogWatch",
+                "Die automatische Installation ist nur unter Windows möglich. "
+                "Bitte die neue LogWatch.exe manuell von der GitHub-Releases-Seite laden.")
+            return
+        token = self.ed_github_token.text().strip() or None
+
+        self._update_progress = QProgressDialog("Lade Update herunter …", "Abbrechen", 0, 100, self)
+        self._update_progress.setWindowTitle("LogWatch – Update")
+        self._update_progress.setWindowModality(Qt.WindowModal)
+        self._update_progress.setAutoClose(False)
+        self._update_progress.setValue(0)
+
+        worker = UpdateDownloadWorker(release, token)
+        worker.progress.connect(self._on_update_progress)
+        worker.finished_dl.connect(self._on_update_downloaded)
+        self._update_dl_worker = worker
+        self._update_progress.canceled.connect(self._cancel_update_download)
+        worker.start()
+
+    def _on_update_progress(self, read_bytes: int, total: int) -> None:
+        if not self._update_progress:
+            return
+        if total > 0:
+            self._update_progress.setValue(int(read_bytes * 100 / total))
+        else:
+            # Größe unbekannt → nur MB anzeigen
+            self._update_progress.setLabelText(f"Lade Update herunter … ({read_bytes // (1024*1024)} MB)")
+
+    def _cancel_update_download(self) -> None:
+        # Hinweis: Der Download läuft robust zu Ende; wir brechen hier nur die Anzeige ab.
+        self.append_status("Update-Download abgebrochen.")
+
+    def _on_update_downloaded(self, result) -> None:
+        if self._update_progress:
+            self._update_progress.close()
+            self._update_progress = None
+
+        if isinstance(result, Exception):
+            msg = str(result) or "Download fehlgeschlagen."
+            self.append_status(f"Update-Download fehlgeschlagen: {msg}")
+            QMessageBox.critical(self, "LogWatch", f"Update fehlgeschlagen:\n{msg}")
+            return
+
+        new_exe = result
+        try:
+            updater.install_and_restart(new_exe)
+        except Exception as exc:  # noqa: BLE001
+            self.append_status(f"Update-Installation fehlgeschlagen: {exc}")
+            QMessageBox.critical(self, "LogWatch", f"Update-Installation fehlgeschlagen:\n{exc}")
+            return
+
+        self.append_status("Update wird installiert. Die Anwendung wird jetzt neu gestartet.")
+        QMessageBox.information(
+            self, "LogWatch",
+            "Das Update wird installiert und LogWatch neu gestartet.")
+        self._quit_app()
 
     # ----------------------------------------------------------------- tray
     def _tray_activated(self, reason):

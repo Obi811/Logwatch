@@ -47,3 +47,4 @@ Zum Abhaken einfach `[ ]` in `[x]` ändern. Neue Punkte unten anhängen.
 - [x] Automatisierte Abhängigkeits-Updates per Dependabot (Python + GitHub-Actions, wöchentliche PRs)
 - [x] Automatische Sicherheits-Updates bei bekannten Schwachstellen (Dependabot Security)
 - [x] Sicherheits-Audit der Abhängigkeiten per `pip-audit` (CI-Workflow `Security-Audit`)
+- [x] Update-Funktion: Prüfung/Download/Installation neuer Releases über GitHub, optionales verschlüsseltes PAT, Auto-Check beim Start (Code-Signierung bleibt offen)

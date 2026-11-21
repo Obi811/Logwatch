@@ -151,6 +151,11 @@ class Config:
     # Autostart mit Windows (pro Benutzer)
     autostart: bool = False
 
+    # Updates
+    update_check_on_start: bool = True   # beim Start automatisch nach Updates suchen
+    github_pat: str = ""                 # optionales GitHub-Token (für privates Repo),
+                                         # verschlüsselt gespeichert wie andere Geheimnisse
+
     # Max. Empfängeranzahl
     MAX_RECIPIENTS: int = 5
 
@@ -168,6 +173,8 @@ class Config:
             "recipients": [r.to_dict() for r in self.recipients],
             "cooldown_seconds": self.cooldown_seconds,
             "autostart": self.autostart,
+            "update_check_on_start": self.update_check_on_start,
+            "github_pat": self.github_pat,
         }
 
     @classmethod
@@ -190,6 +197,10 @@ class Config:
         c.recipients = [Recipient.from_dict(r) for r in d.get("recipients", [])]
         c.cooldown_seconds = int(d.get("cooldown_seconds", 300))
         c.autostart = bool(d.get("autostart", False))
+        # Neue Update-Felder (abwärtskompatibel: alte Profile ohne diese Felder
+        # laden mit den Defaults weiter).
+        c.update_check_on_start = bool(d.get("update_check_on_start", True))
+        c.github_pat = str(d.get("github_pat", ""))
         return c
 
     def active_recipients(self) -> List[Recipient]:
