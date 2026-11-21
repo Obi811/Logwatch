@@ -7,6 +7,9 @@ Das Format orientiert sich an [Keep a Changelog](https://keepachangelog.com/de/1
 und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/de/).
 
 ## [Unveröffentlicht]
+- —
+
+## [0.3.0] – 2026-11-21
 ### Hinzugefügt
 - **Update-Funktion:** Der Client prüft über die GitHub-API, ob ein neueres
   Release verfügbar ist, und kann die neue `LogWatch.exe` herunterladen und
@@ -90,6 +93,7 @@ und das Projekt folgt der [Semantischen Versionierung](https://semver.org/lang/d
 - PyInstaller-Spec, `build_windows.bat` und GitHub-Actions-Workflows für Tests
   und Windows-Release.
 
-[Unveröffentlicht]: https://github.com/Obi811/Logwatch/compare/v0.2.0...HEAD
+[Unveröffentlicht]: https://github.com/Obi811/Logwatch/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/Obi811/Logwatch/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/Obi811/Logwatch/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/Obi811/Logwatch/releases/tag/v0.1.0
